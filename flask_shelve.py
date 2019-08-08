@@ -63,7 +63,7 @@ class _Shelve(object):
             return writer
         else:
             fileno = self._lock.acquire_read_lock()
-            reader = self._open_db(mode)
+            reader = self._open_db(mode, writeback=False)
             reader.fileno = fileno
             _request_ctx_stack.top.shelve_reader = reader
             return reader
@@ -71,13 +71,15 @@ class _Shelve(object):
     def _is_write_mode(self, mode):
         return mode in ('c', 'w', 'n')
 
-    def _open_db(self, flag):
+    def _open_db(self, flag, writeback=None):
         cfg = self.app.config
+        if writeback is None:
+            writeback = cfg['SHELVE_WRITEBACK']
         return shelve.open(
             filename=cfg['SHELVE_FILENAME'],
             flag=flag,
             protocol=cfg['SHELVE_PROTOCOL'],
-            writeback=cfg['SHELVE_WRITEBACK']
+            writeback=writeback
         )
 
     def close_db(self, ignore_arg):
